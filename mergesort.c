@@ -84,47 +84,47 @@ void selection_sort(int *arr, int low, int high) {
 void normal_mergeSort(int *arr, int low, int high, int n) {
     int mid;
     if(low<high){
-        mid = (low+high)/2;
-        if(mid - low + 1 < 5)
-            selection_sort(arr, low, mid);
-        else
+        if(high - low +1 < 5) {
+            selection_sort(arr, low, high+1);
+        }
+        else {
+            mid = (low+high)/2;
             normal_mergeSort(arr, low, mid, n);
-        if(high - mid < 5)
-            selection_sort(arr, mid+1, high);
-        else
             normal_mergeSort(arr, mid + 1, high, n);
-        merge(arr, low, mid, high);
+            merge(arr, low, mid, high);
+        }
     }
 }
 
 void mergeSort(int *arr, int low, int high, int n) {
     int mid;
     if(low<high){
-        //if(high - low < 5) {
-        //    selection_sort(arr, low, high);
-        //    return;
-        //}
-        mid = (low+high)/2;
-        int pid1 = fork();
-        int pid2;
-        if(pid1 == 0) {
-            mergeSort(arr, low, mid, n);
-            _exit(1);
+        if(high - low + 1 < 5) {
+            selection_sort(arr, low, high+1);
         }
         else {
-            pid2=fork();
-            if(pid2 == 0) {
-                mergeSort(arr, mid + 1, high, n);
+            mid = (low+high)/2;
+            int pid1 = fork();
+            int pid2;
+            if(pid1 == 0) {
+                mergeSort(arr, low, mid, n);
                 _exit(1);
             }
             else {
-                int status;
-                waitpid(pid1, &status, 0);
-                waitpid(pid2, &status, 0);
+                pid2=fork();
+                if(pid2 == 0) {
+                    mergeSort(arr, mid + 1, high, n);
+                    _exit(1);
+                }
+                else {
+                    int status;
+                    waitpid(pid1, &status, 0);
+                    waitpid(pid2, &status, 0);
+                }
             }
+            merge(arr, low, mid, high);
+            return;
         }
-        merge(arr, low, mid, high);
-        return;
     }
 }
 
@@ -144,28 +144,33 @@ void *threaded_mergeSort(void* a) {
 
     if(low >= high)
         return NULL;
-    int mid = (low+high)/2;
+    if(high - low + 1 < 5) {
+        selection_sort(arr, low, high+1);
+    }
+    else {
+        int mid = (low+high)/2;
 
-    pthread_t tid1;
-    struct arg a1;
-    a1.low = low;
-    a1.high = mid;
-    a1.arr = arr;
-    a1.n=n;
-    pthread_create(&tid1, NULL, threaded_mergeSort, &a1);
+        pthread_t tid1;
+        struct arg a1;
+        a1.low = low;
+        a1.high = mid;
+        a1.arr = arr;
+        a1.n=n;
+        pthread_create(&tid1, NULL, threaded_mergeSort, &a1);
 
-    pthread_t tid2;
-    struct arg a2;
-    a2.low = mid+1;
-    a2.high = high;
-    a2.arr = arr;
-    pthread_create(&tid2, NULL, threaded_mergeSort, &a2);
+        pthread_t tid2;
+        struct arg a2;
+        a2.low = mid+1;
+        a2.high = high;
+        a2.arr = arr;
+        pthread_create(&tid2, NULL, threaded_mergeSort, &a2);
 
 
-    pthread_join(tid1, NULL);
-    pthread_join(tid2, NULL);
+        pthread_join(tid1, NULL);
+        pthread_join(tid2, NULL);
 
-    merge(arr, low, mid, high);
+        merge(arr, low, mid, high);
+    }
 }
 
 void runSorts(long long int n) {
@@ -174,17 +179,20 @@ void runSorts(long long int n) {
     for(int i=0;i<n;i++) scanf("%d", arr+i);
 
     int brr[n+1];
+    long double st;
+    long double en;
     for(int i=0;i<n;i++) brr[i] = arr[i];
+
     printf("\nRunning Concurrent Mergesort for n = %lld\n", n);
     clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
-    long double st = ts.tv_nsec/(1e9)+ts.tv_sec;
+    st = ts.tv_nsec/(1e9)+ts.tv_sec;
     mergeSort(arr, 0, n-1, n);
     for(int i=0; i<n; i++){
         printf("%d ",arr[i]);
     }
     printf("\n");
     clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
-    long double en = ts.tv_nsec/(1e9)+ts.tv_sec;
+    en = ts.tv_nsec/(1e9)+ts.tv_sec;
     printf("Time = %Lf\n", en - st);
     long double t1 = en-st;
 
@@ -220,7 +228,7 @@ void runSorts(long long int n) {
     printf("Time = %Lf\n", en - st);
     long double t3 = en - st;
 
-    printf("\nNormal Mergesort ran:\n\t[ %Lf ] times faster than Concurrent Mergesort\n\t[ %Lf ] times faster than Threaded Concurrent Mergesort\n\n\n", t1/t3, t2/t3);
+    printf("\nNormal Mergesort ran:\n\t- [%Lf] times faster than Concurrent Mergesort\n\t- [%Lf] times faster than Threaded Concurrent Mergesort\n\n\n", t1/t3, t2/t3);
     shmdt(arr);
     return;
 }
