@@ -1,0 +1,12 @@
+Here we see that the normal implementation of Merge sort is much faster than its Concurrent and threaded counterparts.
+
+Concurrent version:
+Here we spawn two child processes that simultaneously try to merge sort the array provided to them.
+As they are executed simultaneoulsy, they both try to access different parts of arrays in the memory at the same time.
+This results in high probability of cache miss. Lets say the left part is accessed first, it gets loaded into cache after a miss.
+At the same time, right part is also accessed, which will again be a cache miss and this is will replace the left loaded array in cache.
+This procedure keeps on repeating, resulting in a cache miss much more often than the normal one, causing increase in time to get computed.
+
+Threaded version:
+We are creating a thread for each part of the array we are sorting. In the first step, 2 threads are created, in the second step, 4 threads are created.
+As we can see, the number of threads created are very large in number. The queuing and other overheads of Managing these threads will outweigh the parallelism gained.
