@@ -11,6 +11,8 @@ int zone_slot[2];
 int zone_vac[2];
 int cnt;
 
+int num_stu, num_zone, num_com;
+
 int com_batch[1];
 int com_num[1];
 double com_prob[1];
@@ -54,14 +56,15 @@ void* produce(void* inp) {
     printf("\nPharmaceutical Company %d is preparing %d batches of vaccines which have success probability %lf\n", 0, com_batch[0], com_prob[0]);
     sleep(rand()%4+2);
     printf("\nPharmaceutical Company %d has prepared %d batches of vaccines which have success probability %lf. Waiting for all the vaccines to be used to resume production\n", 0, com_batch[0], com_prob[0]);
-    for(int i=0;i<2;i++) {
+    for(int i=0;i<num_zone;i++) {
         if(com_batch[0] != 0) {
             if(zone_vac[i] == 0) {
                 printf("\nPharmaceutical Company %d is delivering a vaccine batch to Vaccination Zone %d which has success probability %lf\n", 0, i, com_prob[0]);
                 sleep(2);
                 zone_vac[i] = com_num[0];
                 zone_prob[i] = com_prob[0];
-                printf("\nPharmaceutical Company %d has delivered vaccines to Vaccination zone %d, resuming vaccinations now\n", 0, i);
+                printf("\nPharmaceutical Company %d has delivered %d vaccines to Vaccination zone %d, resuming vaccinations now\n", 0, com_num[0], i);
+                printf("\nVaccination Zone %d entering Vaccination Phase\n", i);
             }
             com_batch[0]--;
         }
@@ -71,7 +74,6 @@ void* produce(void* inp) {
 
 void* vaccinate(void* inp) {
     stu* input = (stu*) inp;
-    printf("\nVaccination Zone %d entering Vaccination Phase\n", 0);
     sleep(2);
     if(stu_trial[input->id] == 0) {
         printf("\nEXIT1\n");
@@ -120,12 +122,11 @@ stu* s[100];
 int stu_assign[100];
 
 int main() {
-    zone_slot[0]=2;
+    zone_slot[0]=4;
     int slt_cnt=0;
     pthread_t com0;
-    int num_stu, num_zone, num_com;
     scanf("%d %d %d", &num_stu, &num_zone, &num_com);
-    
+
     for(int i=0;i<num_stu;i++) {
         stu_trial[i]=3;
     }
@@ -136,7 +137,7 @@ int main() {
     s_com->id=0;
     pthread_create(&com0, NULL, produce, (void*)s_com);
     pthread_join(com0, NULL);
-   
+
     cnt = add_trials(num_stu);
     while(cnt > 0) {
         for(int i=0;i<num_stu;i++) {
@@ -153,6 +154,15 @@ int main() {
                     s[i]->id=i;
                     stu_assign[i]=1;
                     pthread_create(&ids[i], NULL, vaccinate, (void*)s[i]);
+                }
+                else {
+                    for(int k=0;k<num_stu;k++) {
+                        if(stu_assign[k] !=-1) {
+                            pthread_join(ids[k], NULL);
+                        }
+                    }
+                    printf("Zone 0 is done\n");
+                    return 0;
                 }
             }
         }
