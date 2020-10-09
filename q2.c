@@ -7,7 +7,7 @@ int var=8;
 int stu_trial[3];
 int stu_cnt;
 
-float zone_prob[2];
+double zone_prob[2];
 int zone_slot[2];
 int zone_vac[2];
 
@@ -15,7 +15,7 @@ int cnt = 3*3;
 
 int com_batch[1];
 int com_num[1];
-int com_prob[1];
+double com_prob[1];
 
 pthread_mutex_t mutex;
 
@@ -49,17 +49,20 @@ typedef struct stu{
 
 void* produce(void* inp) {
     printf("\nAll the vaccines prepared by Pharmaceutical Company %d are emptied. Resuming production now.\n", 0);
+    srand(time(0));
     com_batch[0] = rand()%5+1;
     com_num[0] = rand()%11+10;
-    printf("\nPharmaceutical Company %d is preparing %d batches of vaccines which have success probability %d\n", 0, com_batch[0], com_prob[0]);
+    com_prob[0] = (double)rand() / (double)RAND_MAX;
+    printf("\nPharmaceutical Company %d is preparing %d batches of vaccines which have success probability %lf\n", 0, com_batch[0], com_prob[0]);
     sleep(rand()%4+2);
-    printf("\nPharmaceutical Company %d has prepared %d batches of vaccines which have success probability %d. Waiting for all the vaccines to be used to resume production\n", 0, com_batch[0], com_prob[0]);
+    printf("\nPharmaceutical Company %d has prepared %d batches of vaccines which have success probability %lf. Waiting for all the vaccines to be used to resume production\n", 0, com_batch[0], com_prob[0]);
     for(int i=0;i<2;i++) {
         if(com_batch[0] != 0) {
             if(zone_vac[i] == 0) {
-                printf("\nPharmaceutical Company %d is delivering a vaccine batch to Vaccination Zone %d which has success probability %d\n", 0, i, com_prob[0]);
+                printf("\nPharmaceutical Company %d is delivering a vaccine batch to Vaccination Zone %d which has success probability %lf\n", 0, i, com_prob[0]);
                 sleep(2);
                 zone_vac[i] = com_num[0];
+                zone_prob[i] = com_prob[0];
                 printf("\nPharmaceutical Company %d has delivered vaccines to Vaccination zone %d, resuming vaccinations now\n", 0, i);
             }
             com_batch[0]--;
@@ -70,23 +73,23 @@ void* produce(void* inp) {
 
 void* vaccinate(void* inp) {
     stu* input = (stu*) inp;
-    printf("Vaccination Zone %d entering Vaccination Phase\n", 0);
+    printf("\nVaccination Zone %d entering Vaccination Phase\n", 0);
     sleep(2);
     if(stu_trial[input->id] == 0) {
         printf("\nEXIT1\n");
         return NULL;
     }
-    if(var == 0) {
+    if(zone_vac[0] == 0) {
         printf("\nEXIT2\n");
-        printf("\nVaccine stock over!\n");
+        printf("\nVaccine stock over for zone %d\n", 0);
         stu_trial[input->id]=0;
         return NULL;
     }
     stu_cnt++;
     pthread_mutex_lock(&mutex);
-    var--;
+    zone_vac[0]--;
     if(var > 0) {
-        printf("Student %d on Vaccination zone %d waiting to be vaccinated\n", input->id, 0);
+        printf("\nStudent %d on Vaccination zone %d waiting to be vaccinated\n", input->id, 0);
         //sleep(1);
         if((double)rand() / (double)RAND_MAX < zone_prob[0]) {
             green();
@@ -100,9 +103,6 @@ void* vaccinate(void* inp) {
             reset();
             stu_trial[input->id]--;
         }
-    }
-    else {
-        printf("Vaccine stock over!\n");
     }
     stu_cnt --;
     pthread_mutex_unlock(&mutex);
@@ -119,9 +119,14 @@ int main() {
     zone_slot[0]=2;
     int slt_cnt=0;
     int stu_assign[3];
+    pthread_t com0;
 
     pthread_mutex_init(&mutex, NULL);
 
+    stu* s_com = (stu*)malloc(sizeof(stu));
+    s_com->id=0;
+    pthread_create(&com0, NULL, produce, (void*)s_com);
+    pthread_join(com0, NULL);
     while(cnt > 0) {
         for(int i=0;i<3;i++) {
             stu_assign[i]=-1;
@@ -137,23 +142,20 @@ int main() {
                     s[i]->id=i;
                     stu_assign[i]=1;
                     pthread_create(&ids[i], NULL, vaccinate, (void*)s[i]);
-                    //pthread_join(ids[i], NULL);
                 }
             }
-            //pthread_join(NULL, NULL);
         }
         for(int i=0;i<3;i++) {
             if(stu_assign[i] !=-1) {
                 pthread_join(ids[i], NULL);
             }
         }
-        
         cnt = stu_trial[0] + stu_trial[1] + stu_trial[2];
     }
 
     pthread_mutex_destroy(&mutex);
 
-    printf("Vaccines left: %d\n", var);
+    printf("Vaccines left: %d\n", zone_vac[0]);
     printf("\nSimulation Over.\n");
     return 0;
 }
