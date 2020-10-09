@@ -3,15 +3,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-int var=8;
-int stu_trial[3];
+int stu_trial[100];
 int stu_cnt;
 
 double zone_prob[2];
 int zone_slot[2];
 int zone_vac[2];
-
-int cnt = 3*3;
+int cnt;
 
 int com_batch[1];
 int com_num[1];
@@ -88,7 +86,7 @@ void* vaccinate(void* inp) {
     stu_cnt++;
     pthread_mutex_lock(&mutex);
     zone_vac[0]--;
-    if(var > 0) {
+    if(zone_vac[0] > 0) {
         printf("\nStudent %d on Vaccination zone %d waiting to be vaccinated\n", input->id, 0);
         //sleep(1);
         if((double)rand() / (double)RAND_MAX < zone_prob[0]) {
@@ -109,17 +107,28 @@ void* vaccinate(void* inp) {
     return NULL;
 }
 
+int add_trials(int n) {
+    int sum=0;
+    for(int i=0;i<n;i++) {
+        sum += stu_trial[i];
+    }
+    return sum;
+}
+
+pthread_t ids[100];
+stu* s[100];
+int stu_assign[100];
+
 int main() {
-    pthread_t ids[3];
-    stu* s[3];
-    stu_trial[0]=3;
-    stu_trial[1]=3;
-    stu_trial[2]=3;
-    zone_prob[0]=0.3;
     zone_slot[0]=2;
     int slt_cnt=0;
-    int stu_assign[3];
     pthread_t com0;
+    int num_stu, num_zone, num_com;
+    scanf("%d %d %d", &num_stu, &num_zone, &num_com);
+    
+    for(int i=0;i<num_stu;i++) {
+        stu_trial[i]=3;
+    }
 
     pthread_mutex_init(&mutex, NULL);
 
@@ -127,13 +136,15 @@ int main() {
     s_com->id=0;
     pthread_create(&com0, NULL, produce, (void*)s_com);
     pthread_join(com0, NULL);
+   
+    cnt = add_trials(num_stu);
     while(cnt > 0) {
-        for(int i=0;i<3;i++) {
+        for(int i=0;i<num_stu;i++) {
             stu_assign[i]=-1;
         }
         stu_cnt=0;
         slt_cnt=0;
-        for(int i=0;i<3;i++) {
+        for(int i=0;i<num_stu;i++) {
             if(stu_trial[i] > 0) {
                 printf("Student %d has arrived for his %d round of vaccination\n", i, 4-stu_trial[i]);
                 if(slt_cnt < zone_slot[0]) {
@@ -145,12 +156,12 @@ int main() {
                 }
             }
         }
-        for(int i=0;i<3;i++) {
+        for(int i=0;i<num_stu;i++) {
             if(stu_assign[i] !=-1) {
                 pthread_join(ids[i], NULL);
             }
         }
-        cnt = stu_trial[0] + stu_trial[1] + stu_trial[2];
+        cnt = add_trials(num_stu);
     }
 
     pthread_mutex_destroy(&mutex);
