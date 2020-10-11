@@ -67,7 +67,7 @@ void* company(void* inp) {
         printf("\nPharmaceutical Company %d has prepared %d batches of vaccines which have success probability %lf. Waiting for all the vaccines to be used to resume production\n", id, bat, com_prob[id]);
         com_batches[id]=bat;
         com_vac[id]=vac;
-        com_left[id]=vac;
+        com_left[id]=bat;
         while(com_left[id] > 0) {
             if(stu==0)
                 return NULL;
