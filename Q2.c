@@ -78,19 +78,20 @@ void* company(void* inp) {
 }
 
 int min(int a, int b, int c) {
-    if(a<=c && a<=b) {
-        return a;
+    int num=0;
+    while(a && b && c) {
+        a--;
+        b--;
+        c--;
+        num++;
     }
-    if(b<=c && b<=a) {
-        return b;
-    }
-    return c;
+    return num;
 }
 
 int assign_slot(int id) {
     int temp;
     while((temp = waiting) <= 0) {
-        if(stu<1) {
+        if(stu==0) {
             return -1;
         } 
     }
@@ -143,7 +144,7 @@ slot_dec:
         zone_slots[id]=k;
         printf("\nVaccination Zone %d is ready to vaccinate with %d slots\n", id, k);
         zone_prog[id]=0;
-        while(zone_over_slots[id] > 0 && waiting > 0) {
+        while(zone_slots[id] > 0 && waiting > 0) {
         }
         zone_over_slots[id] = k-zone_slots[id];
         printf("\nVaccination Zone %d entering Vaccination Phase\n", id);
@@ -154,10 +155,9 @@ slot_dec:
         }
         if(zone_vacleft[id]>0)
             goto slot_dec;
-        //NEW
         */
+        //NEW
         x = assign_slot(id);
-        
         if(x==-1) {
             return NULL;
         }
@@ -189,9 +189,14 @@ int waitzone(int id) {
             printf("\nStudent %d assigned a slot on the Vaccination Zone %d and waiting to be vaccinated\n", id, it);
             while(zone_prog[it] == 0) {
             }
+            //FIX
+            //if(zone_slots[it] - zone_over_slots[it] == 0) {
+            //    zone_prog[it]=0;
+            //}
+            //FIX
+            printf("\nStudent %d on Vaccination Zone %d has been vaccinated which has success probability %lf\n", id, it, zone_prob[it]);
             zone_vacleft[it]--;
             zone_over_slots[it]--;
-            printf("\nStudent %d on Vaccination Zone %d has been vaccinated which has success probability %lf\n", id, it, zone_prob[it]);
             if((double)rand() / (double)RAND_MAX < zone_prob[it]) {
                 green();
                 printf("\nStudent %d has tested positive for antibodies.\n\033[0m", id);
