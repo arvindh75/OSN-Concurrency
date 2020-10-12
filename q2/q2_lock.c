@@ -139,7 +139,7 @@ void* zone(void* inp) {
         zone_prog[id]=0;
         pthread_mutex_unlock(&zone_lock[id]);
 
-        while(1) {
+        while(stu) {
             pthread_mutex_lock(&com_lock[it]);
             if(com_batches[it] > 0) {
                 com_batches[it]--;
@@ -191,7 +191,7 @@ int waitzone(int id) {
     int it=0;
     printf("\nStudent %d is waiting to be allocated a slot on a Vaccination Zone\n", id);
     waiting++;
-    while(1) {
+    while(stu) {
         pthread_mutex_lock(&zone_lock[it]);
         if(zone_slots[it] > 0 && (zone_prog[it] == 0)) {
             zone_slots[it]--;
@@ -234,7 +234,7 @@ int waitzone(int id) {
 }
 
 void* student(void* inp) {
-    sleep(rand()%4+2);
+    sleep(rand()%3+1);
     int id = ((struct st*)inp)->id;
     int ret;
     while(stu_vac[id]!=1 && stu_trail[id]<4) {
