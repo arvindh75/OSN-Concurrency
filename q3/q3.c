@@ -95,7 +95,12 @@ void* acoustic(void* input) {
         pthread_mutex_unlock(&per_lock[id]);
         return NULL;
     }
-    if(per_status[id] == STAGE_ASSIGNED || per_status[id] == LEFT) {
+    if(per_status[id] == STAGE_ASSIGNED) {
+        sem_post(&a_sem);
+        pthread_mutex_unlock(&per_lock[id]);
+        return NULL;
+    }
+    if(per_status[id] == LEFT) {
         sem_post(&a_sem);
         pthread_mutex_unlock(&per_lock[id]);
         return NULL;
@@ -145,8 +150,9 @@ void* acoustic(void* input) {
     stage_per[per_stage[id]]=-1;
     stage_status[per_stage[id]]=FREE;
     sem_post(&a_sem);
-    if(per_coid[id] == -1 && per_inst[id] != 's') {
-        sem_wait(&join_sem);
+    if(per_coid[id] == -1) {
+        if(per_inst[id] != 's')
+            sem_wait(&join_sem);
     }
     per_status[id]=LEFT;
     green();
@@ -197,7 +203,12 @@ void* electric(void* input) {
         pthread_mutex_unlock(&per_lock[id]);
         return NULL;
     }
-    if(per_status[id] == STAGE_ASSIGNED || per_status[id] == LEFT) {
+    if(per_status[id] == STAGE_ASSIGNED) {
+        sem_post(&e_sem);
+        pthread_mutex_unlock(&per_lock[id]);
+        return NULL;
+    }
+    if(per_status[id] == LEFT) {
         sem_post(&e_sem);
         pthread_mutex_unlock(&per_lock[id]);
         return NULL;
@@ -243,8 +254,9 @@ void* electric(void* input) {
     stage_per[per_stage[id]]=-1;
     stage_status[per_stage[id]]=FREE;
     sem_post(&e_sem);
-    if(per_coid[id] == -1 && per_inst[id] != 's') {
-        sem_wait(&join_sem);
+    if(per_coid[id] == -1) {
+        if(per_inst[id] != 's')
+            sem_wait(&join_sem);
     }
     per_status[id]=LEFT;
     green();
@@ -295,7 +307,12 @@ void* join_per(void* input) {
         pthread_mutex_unlock(&per_lock[id]);
         return NULL;
     }
-    if(per_status[id] == STAGE_ASSIGNED || per_status[id] == LEFT) {
+    if(per_status[id] == STAGE_ASSIGNED) {
+        sem_post(&join_sem);
+        pthread_mutex_unlock(&per_lock[id]);
+        return NULL;
+    }
+    if(per_status[id] == LEFT) {
         sem_post(&join_sem);
         pthread_mutex_unlock(&per_lock[id]);
         return NULL;
