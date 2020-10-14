@@ -7,7 +7,6 @@
 #include <semaphore.h>
 
 #define MAX_N 1001
-
 #define STAGE_NOT_ASSIGNED 0
 #define STAGE_ASSIGNED 1
 #define LEFT 2
@@ -82,6 +81,7 @@ void* acoustic(void* input) {
     int id = ((struct st*)input)->id;
     int i;
     struct timespec tim;
+    clock_gettime(CLOCK_REALTIME, &tim);
     tim.tv_sec += t;
     int ret = sem_timedwait(&a_sem, &tim);
     pthread_mutex_lock(&per_lock[id]);
@@ -120,22 +120,28 @@ void* acoustic(void* input) {
         }
         pthread_mutex_unlock(&stage_lock[i]);
     }
+    pthread_mutex_unlock(&per_lock[id]);
+    srand(time(0));
     double ti = (rand()*(t2-t1))/RAND_MAX + t1;
     yellow();
     printf("\n%s performing %c at Acoustic stage for %d sec\n", per_name[id], per_inst[id], (int)ti);
     reset();
     sleep((int)ti);
+    printf("\n%s performing %c at Acoustic stage for 1st\n", per_name[id], per_inst[id]);
     int co_per=1;
     pthread_mutex_lock(&per_lock[id]);
     pthread_mutex_lock(&stage_lock[per_stage[id]]);
     if(per_coid[id] != -1) {
-        pthread_mutex_unlock(&per_lock[id]);
         pthread_mutex_unlock(&stage_lock[per_stage[id]]);
+        pthread_mutex_unlock(&per_lock[id]);
         sleep(2);
         pthread_mutex_lock(&per_lock[id]);
         pthread_mutex_lock(&stage_lock[per_stage[id]]);
         co_per=2;
     }
+    yellow();
+    printf("\n%s performing %c at Acoustic stage for 2nd\n", per_name[id], per_inst[id]);
+    reset();
     stage_per[per_stage[id]]=-1;
     stage_status[per_stage[id]]=FREE;
     sem_post(&a_sem);
@@ -177,6 +183,7 @@ void* electric(void* input) {
     int id = ((struct st*)input)->id;
     int i;
     struct timespec tim;
+    clock_gettime(CLOCK_REALTIME, &tim);
     tim.tv_sec += t;
     int ret = sem_timedwait(&e_sem, &tim);
     pthread_mutex_lock(&per_lock[id]);
@@ -215,6 +222,8 @@ void* electric(void* input) {
         }
         pthread_mutex_unlock(&stage_lock[i]);
     }
+    pthread_mutex_unlock(&per_lock[id]);
+    srand(time(0));
     double ti = (rand()*(t2-t1))/RAND_MAX + t1;
     yellow();
     printf("\n%s performing %c at Electric stage for %d sec\n", per_name[id], per_inst[id], (int)ti);
@@ -224,8 +233,8 @@ void* electric(void* input) {
     pthread_mutex_lock(&per_lock[id]);
     pthread_mutex_lock(&stage_lock[per_stage[id]]);
     if(per_coid[id] != -1) {
-        pthread_mutex_unlock(&per_lock[id]);
         pthread_mutex_unlock(&stage_lock[per_stage[id]]);
+        pthread_mutex_unlock(&per_lock[id]);
         sleep(2);
         pthread_mutex_lock(&per_lock[id]);
         pthread_mutex_lock(&stage_lock[per_stage[id]]);
@@ -272,6 +281,7 @@ void* join_per(void* input) {
     int id = ((struct st*)input)->id;
     int i;
     struct timespec tim;
+    clock_gettime(CLOCK_REALTIME, &tim);
     tim.tv_sec += t;
     int ret = sem_timedwait(&join_sem, &tim);
     pthread_mutex_lock(&per_lock[id]);
@@ -311,27 +321,30 @@ void* join_per(void* input) {
 
 void* performer(void* input) {
     int id = ((struct st*)input)->id;
-    pthread_t a;
-    pthread_t e;
-    pthread_t join;
     green();
     printf("\n%s %c has arrived\n", per_name[id], per_inst[id]);
     reset();
-    if(per_inst[id] == 'p' || per_inst[id] == 'g') {
+    pthread_t a;
+    pthread_t e;
+    pthread_t join;
+    pthread_mutex_lock(&per_lock[id]);
+    char ch = per_inst[id];
+    pthread_mutex_unlock(&per_lock[id]);
+    if(ch == 'p' || ch == 'g') {
         pthread_create(&a, NULL, acoustic, &per_struct[id]);
         pthread_create(&e, NULL, electric, &per_struct[id]);
         pthread_join(a, NULL);
         pthread_join(e, NULL);
     }
-    else if(per_inst[id] == 'b') {
+    else if(ch == 'b') {
         pthread_create(&e, NULL, electric, &per_struct[id]);
         pthread_join(e, NULL);
     }
-    else if(per_inst[id] == 'v') {
+    else if(ch == 'v') {
         pthread_create(&a, NULL, acoustic, &per_struct[id]);
         pthread_join(a, NULL);
     }
-    else if(per_inst[id] == 's') {
+    else if(ch == 's') {
         pthread_create(&a, NULL, acoustic, &per_struct[id]);
         pthread_create(&e, NULL, electric, &per_struct[id]);
         pthread_create(&join, NULL, join_per, &per_struct[id]);
