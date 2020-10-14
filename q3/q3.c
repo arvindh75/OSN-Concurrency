@@ -7,16 +7,9 @@
 #include <semaphore.h>
 
 #define MAX_N 1001
-#define STAGE_NOT_ASSIGNED 0
-#define STAGE_ASSIGNED 1
-#define LEFT 2
 
-#define ACOUSTIC 0
-#define ELECTRIC 1
-
-#define FREE 0
-#define CAN_JOIN 1
-#define CANNOT_JOIN 2
+pthread_mutex_t per_lock[MAX_N];
+pthread_mutex_t stage_lock[MAX_N];
 
 char per_name[50][MAX_N];
 char per_inst[MAX_N];
@@ -28,9 +21,6 @@ int per_stage[MAX_N];
 int stage_typ[MAX_N];
 int stage_per[MAX_N];
 int stage_status[MAX_N];
-
-pthread_mutex_t per_lock[MAX_N];
-pthread_mutex_t stage_lock[MAX_N];
 
 pthread_t per_thr[MAX_N];
 
@@ -84,8 +74,8 @@ void* acoustic(void* input) {
     int ret = sem_timedwait(&a_sem, &tim);
     pthread_mutex_lock(&per_lock[id]);
     if(ret == -1) {
-        if(per_status[id] == STAGE_NOT_ASSIGNED) {
-            per_status[id] = LEFT;
+        if(per_status[id] == 0) {
+            per_status[id] = 2;
             red();
             printf("\n%s %c has left because of impatience\n", per_name[id], per_inst[id]);
             reset();
@@ -93,28 +83,28 @@ void* acoustic(void* input) {
         pthread_mutex_unlock(&per_lock[id]);
         return NULL;
     }
-    if(per_status[id] == STAGE_ASSIGNED) {
+    if(per_status[id] == 1) {
         sem_post(&a_sem);
         pthread_mutex_unlock(&per_lock[id]);
         return NULL;
     }
-    if(per_status[id] == LEFT) {
+    if(per_status[id] == 2) {
         sem_post(&a_sem);
         pthread_mutex_unlock(&per_lock[id]);
         return NULL;
     }
     for(i=0;i<a+e;i++) {
         pthread_mutex_lock(&stage_lock[i]);
-        if(stage_status[i] == FREE) {
-            if(stage_typ[i] == ACOUSTIC) {
+        if(stage_status[i] == 0) {
+            if(stage_typ[i] == 0) {
                 stage_per[i] = id;
-                per_status[id] = STAGE_ASSIGNED;
+                per_status[id] = 1;
                 per_stage[id] = i;
                 if(per_inst[id] == 's') {
-                    stage_status[i] = CANNOT_JOIN;
+                    stage_status[i] = 2;
                 }
                 else {
-                    stage_status[i] = CAN_JOIN;
+                    stage_status[i] = 1;
                     sem_post(&join_sem);
                 }
                 pthread_mutex_unlock(&stage_lock[i]);
@@ -146,19 +136,19 @@ void* acoustic(void* input) {
     printf("\n%s performing %c at Acoustic stage for 2nd\n", per_name[id], per_inst[id]);
     reset();
     stage_per[per_stage[id]]=-1;
-    stage_status[per_stage[id]]=FREE;
+    stage_status[per_stage[id]]=0;
     sem_post(&a_sem);
     if(per_coid[id] == -1) {
         if(per_inst[id] != 's')
             sem_wait(&join_sem);
     }
-    per_status[id]=LEFT;
+    per_status[id]=2;
     green();
     printf("\n%s performance at Acoustic stage ended\n", per_name[id]);
     reset();
     if(per_coid[id] != -1) {
         pthread_mutex_lock(&per_lock[per_coid[id]]);
-        per_status[per_coid[id]]=LEFT;
+        per_status[per_coid[id]]=2;
         green();
         printf("\n%s performance at Electric stage ended\n", per_name[per_coid[id]]);
         reset();
@@ -192,8 +182,8 @@ void* electric(void* input) {
     int ret = sem_timedwait(&e_sem, &tim);
     pthread_mutex_lock(&per_lock[id]);
     if(ret == -1) {
-        if(per_status[id] == STAGE_NOT_ASSIGNED) {
-            per_status[id] = LEFT;
+        if(per_status[id] == 0) {
+            per_status[id] = 2;
             red();
             printf("\n%s %c has left because of impatience\n", per_name[id], per_inst[id]);
             reset();
@@ -201,28 +191,28 @@ void* electric(void* input) {
         pthread_mutex_unlock(&per_lock[id]);
         return NULL;
     }
-    if(per_status[id] == STAGE_ASSIGNED) {
+    if(per_status[id] == 1) {
         sem_post(&e_sem);
         pthread_mutex_unlock(&per_lock[id]);
         return NULL;
     }
-    if(per_status[id] == LEFT) {
+    if(per_status[id] == 2) {
         sem_post(&e_sem);
         pthread_mutex_unlock(&per_lock[id]);
         return NULL;
     }
     for(i=0;i<a+e;i++) {
         pthread_mutex_lock(&stage_lock[i]);
-        if(stage_status[i] == FREE) {
-            if(stage_typ[i] == ELECTRIC) {
+        if(stage_status[i] == 0) {
+            if(stage_typ[i] == 1) {
                 stage_per[i] = id;
-                per_status[id] = STAGE_ASSIGNED;
+                per_status[id] = 1;
                 per_stage[id] = i;
                 if(per_inst[id] == 's') {
-                    stage_status[i] = CANNOT_JOIN;
+                    stage_status[i] = 2;
                 }
                 else {
-                    stage_status[i] = CAN_JOIN;
+                    stage_status[i] = 1;
                     sem_post(&join_sem);
                 }
                 pthread_mutex_unlock(&stage_lock[i]);
@@ -250,19 +240,19 @@ void* electric(void* input) {
         co_per=2;
     }
     stage_per[per_stage[id]]=-1;
-    stage_status[per_stage[id]]=FREE;
+    stage_status[per_stage[id]]=0;
     sem_post(&e_sem);
     if(per_coid[id] == -1) {
         if(per_inst[id] != 's')
             sem_wait(&join_sem);
     }
-    per_status[id]=LEFT;
+    per_status[id]=2;
     green();
     printf("\n%s performance at Electric stage ended\n", per_name[id]);
     reset();
     if(per_coid[id] != -1) {
         pthread_mutex_lock(&per_lock[per_coid[id]]);
-        per_status[per_coid[id]]=LEFT;
+        per_status[per_coid[id]]=2;
         green();
         printf("\n%s performance at Electric stage ended\n", per_name[per_coid[id]]);
         reset();
@@ -296,8 +286,8 @@ void* join_per(void* input) {
     int ret = sem_timedwait(&join_sem, &tim);
     pthread_mutex_lock(&per_lock[id]);
     if(ret == -1) {
-        if(per_status[id] == STAGE_NOT_ASSIGNED) {
-            per_status[id] = LEFT;
+        if(per_status[id] == 0) {
+            per_status[id] = 2;
             red();
             printf("\n%s %c has left because of impatience\n", per_name[id], per_inst[id]);
             reset();
@@ -305,22 +295,22 @@ void* join_per(void* input) {
         pthread_mutex_unlock(&per_lock[id]);
         return NULL;
     }
-    if(per_status[id] == STAGE_ASSIGNED) {
+    if(per_status[id] == 1) {
         sem_post(&join_sem);
         pthread_mutex_unlock(&per_lock[id]);
         return NULL;
     }
-    if(per_status[id] == LEFT) {
+    if(per_status[id] == 2) {
         sem_post(&join_sem);
         pthread_mutex_unlock(&per_lock[id]);
         return NULL;
     }
     for(i=0;i<a+e;i++) {
         pthread_mutex_lock(&stage_lock[i]);
-        if(stage_status[i] == CAN_JOIN) {
+        if(stage_status[i] == 1) {
             per_stage[id] = i;
-            per_status[id] = STAGE_ASSIGNED;
-            stage_status[i] = CANNOT_JOIN;
+            per_status[id] = 1;
+            stage_status[i] = 2;
             per_coid[stage_per[i]] = id;
             cyan();
             printf("\n%s joined %s's performance, performance extended by 2 secs\n", per_name[id], per_name[stage_per[id]]);
@@ -378,18 +368,18 @@ int main() {
     for(i=0;i<k;i++) {
         scanf("%s %c %d", name, &per_inst[i], &per_time[i]);
         strcpy(per_name[i], name);
-        per_status[i] = STAGE_NOT_ASSIGNED;
+        per_status[i] = 0;
         per_coid[i]=-1;
         per_stage[i]=-1;
         pthread_mutex_init(&per_lock[i], NULL);
     }
     for(i=0;i<a+e;i++) {
         if(i<e)
-            stage_typ[i]=ELECTRIC;
+            stage_typ[i]=1;
         else
-            stage_typ[i]=ACOUSTIC;
+            stage_typ[i]=0;
         stage_per[i]=-1;
-        stage_status[i]=FREE;
+        stage_status[i]=0;
         pthread_mutex_init(&stage_lock[i], NULL);
     }
     blue();
