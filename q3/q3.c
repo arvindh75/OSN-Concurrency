@@ -17,13 +17,11 @@
 #define FREE 0
 #define CAN_JOIN 1
 #define CANNOT_JOIN 2
-#define BUSY 3
 
 char per_name[50][MAX_N];
 char per_inst[MAX_N];
 int per_time[MAX_N];
 int per_status[MAX_N];
-int per_singer[MAX_N];
 int per_coid[MAX_N];
 int per_stage[MAX_N];
 
@@ -382,10 +380,6 @@ int main() {
         strcpy(per_name[i], name);
         per_status[i] = STAGE_NOT_ASSIGNED;
         per_coid[i]=-1;
-        if(per_inst[i] == 's')
-            per_singer[i]=1;
-        else
-            per_singer[i]=0;
         per_stage[i]=-1;
         pthread_mutex_init(&per_lock[i], NULL);
     }
@@ -400,6 +394,7 @@ int main() {
     }
     blue();
     printf("\nBeginning Simulation\n");
+    reset();
     for(i=0;i<k;i++) {
         per_struct[i].id=i;
         pthread_create(&per_thr[i], NULL, performer, &per_struct[i]);
@@ -407,7 +402,9 @@ int main() {
     for(i=0;i<k;i++) {
         pthread_join(per_thr[i], NULL);
     }
+    blue();
     printf("\nSimulation over\n");
+    reset();
     for(i=0;i<k;i++) {
         pthread_mutex_destroy(&per_lock[i]);
     }

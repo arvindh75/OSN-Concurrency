@@ -1,0 +1,36 @@
+-> The following solution comprises of 4 semaphores.
+-> 1 semaphore for Acoustic stages, 1 for Electric stages, 1 for Co-ordinators and last one for "Joinable" stages.
+-> "Joinable" here refers to stages where a musician is performing and a singer can join if required.
+-> Each "Performer" thread spawns some more threads based on their instrument.
+-> The threads that are created are of 3 types. One thread tries to allocate the performer in Acoustic stages, one tries to allocate
+   Electric stages and one tries to join the performer with an already occupied stage. A subset of these are spawned for each of the 
+   performers based on the instrument they play.
+-> Ex:
+    - Piano spawns Acoustic and Electric thread.
+    - Singer spawns Acoustic, Electric and "Join" thread.
+-> Each of the thread created by a "Performer" races to allocate the performer, first one to allocate wins and the rest exits.
+-> Each of them will check if they have exceeded their patient time, if so all the threads quit.
+-> There are locks corresponding to each stage and each performer to ensure safe access and updation of their values.
+-> A stage can be of two types:
+    - Acoustic (0)
+    - Electric (1)
+-> A stage can have three statuses:
+    - Free (0)
+    - Occupied and Free to join (1)
+    - Occupied and closed for joining (2)
+-> A performer can have three statuses:
+    - No stage assigned yet (0)
+    - A stage is assigned (1)
+    - Has performed and left (2)
+-> There are global arrays to store information and status of each stage and performer.
+-> The info stored about a Performer is:
+    - Name
+    - Instrument
+    - Status
+    - Co-performer ID (if any else -1)
+    - ID of stage he is assigned to
+-> The info stored about a stage is:
+    - Type
+    - ID of performer (if any, ID of first performer joined if there are two performing)
+    - Status
+NOTE: Max number of <Any quantity> is assumed to be 1000
