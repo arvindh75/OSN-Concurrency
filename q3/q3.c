@@ -327,24 +327,21 @@ void* performer(void* input) {
     pthread_t a;
     pthread_t e;
     pthread_t join;
-    pthread_mutex_lock(&per_lock[id]);
-    char ch = per_inst[id];
-    pthread_mutex_unlock(&per_lock[id]);
-    if(ch == 'p' || ch == 'g') {
+    if(per_inst[id] == 'p' || per_inst[id] == 'g') {
         pthread_create(&a, NULL, acoustic, &per_struct[id]);
         pthread_create(&e, NULL, electric, &per_struct[id]);
         pthread_join(a, NULL);
         pthread_join(e, NULL);
     }
-    else if(ch == 'b') {
+    else if(per_inst[id] == 'b') {
         pthread_create(&e, NULL, electric, &per_struct[id]);
         pthread_join(e, NULL);
     }
-    else if(ch == 'v') {
+    else if(per_inst[id] == 'v') {
         pthread_create(&a, NULL, acoustic, &per_struct[id]);
         pthread_join(a, NULL);
     }
-    else if(ch == 's') {
+    else if(per_inst[id] == 's') {
         pthread_create(&a, NULL, acoustic, &per_struct[id]);
         pthread_create(&e, NULL, electric, &per_struct[id]);
         pthread_create(&join, NULL, join_per, &per_struct[id]);
