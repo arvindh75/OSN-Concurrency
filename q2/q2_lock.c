@@ -136,21 +136,22 @@ int assign_slot(int id) { //Assign slots for each zone
 void* zone(void* inp) {
     int id = ((struct st*)inp)->id;
     int it=0, x;
-    while(stu > 0) {
+    while(stu > 0) { //Wait in an infinite loop until all students are done
         pthread_mutex_lock(&zone_lock[id]);
-        zone_prog[id]=0;
+        zone_prog[id]=0; //Set the zone status as "Not vaccinating" currently
         pthread_mutex_unlock(&zone_lock[id]);
 
-        while(stu) {
+        while(stu) { //Loop through all companies infinitely
             pthread_mutex_lock(&com_lock[it]);
-            if(com_batches[it] > 0) {
-                com_batches[it]--;
+            if(com_batches[it] > 0) { //If a company has a deliverable batch
+                //Assign a batch from the company to the current zone
+                com_batches[it]--; //Decrease the batches left
                 pthread_mutex_unlock(&com_lock[it]);
                 
                 pthread_mutex_lock(&com_lock[it]);
                 pthread_mutex_lock(&zone_lock[id]);
-                zone_prob[id] = com_prob[it];
-                zone_vacleft[id] = com_vac[it];
+                zone_prob[id] = com_prob[it]; //Copy zone probability as selected company's vaccines' probability
+                zone_vacleft[id] = com_vac[it]; //Copy number of vaccines in zone as the number of vaccines in each batch of the selected company
                 pthread_mutex_unlock(&zone_lock[id]);
                 pthread_mutex_unlock(&com_lock[it]);
                 
@@ -161,14 +162,14 @@ void* zone(void* inp) {
             }
             pthread_mutex_unlock(&com_lock[it]);
             it++;
-            it = it%n;
+            it = it%n; //Circular loop
         }
         
-        x = assign_slot(id);
+        x = assign_slot(id); //Allocate slots randomly
         if(x==-1) {
             return NULL;
         }
-        while(zone_vacleft[id]) {
+        while(zone_vacleft[id]) { //Allocate slots as long as they are vaccines left in the zone
             x = assign_slot(id);
             if(x==-1) {
                 return NULL;
@@ -176,14 +177,14 @@ void* zone(void* inp) {
         }
         
         pthread_mutex_lock(&zone_lock[id]);
-        zone_prog[id]=0;
-        zone_slots[id]=0;
+        zone_prog[id]=0; //If it reaches here, the vaccination phase is over as all vaccines are use up
+        zone_slots[id]=0; //Reset number of slots
         pthread_mutex_unlock(&zone_lock[id]);
         
         printf("\nVaccination Zone %d has run out of vaccines\n", id);
         
         pthread_mutex_lock(&com_lock[it]);
-        com_left[it]--;
+        com_left[it]--; //Reduce the company's number of batches live in circulation
         pthread_mutex_unlock(&com_lock[it]);
     }
     return NULL;

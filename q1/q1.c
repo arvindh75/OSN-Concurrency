@@ -228,7 +228,7 @@ void runSorts(long long int n) {
     printf("Time = %Lf\n", en - st);
     long double t3 = en - st;
 
-    printf("\nNormal Mergesort ran:\n\t- [%Lf] times faster than Concurrent Mergesort\n\t- [%Lf] times faster than Threaded Concurrent Mergesort\n\n\n", t1/t3, t2/t3);
+    printf("\nNormal Mergesort ran:\n\t- [%Lf] times faster than Concurrent Mergesort\n\t- [%Lf] times faster than Threaded Concurrent Mergesort\n\n\n", t1/t3, t1/t3);
     shmdt(arr);
     return;
 }
