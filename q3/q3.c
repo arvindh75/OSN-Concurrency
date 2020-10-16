@@ -365,6 +365,10 @@ int main() {
     int i;
     char name[50];
     scanf("%d %d %d %d %d %d %d", &k, &a, &e, &c, &t1, &t2, &t);
+    if((k==0) || (a== 0 && e == 0 ) || (c==0) || (t1>t2)) {
+        printf("Wrong inputs\n");
+        printf("Simulation Over.\n");
+    }
     //Initialize the semaphores with corresponding values
     sem_init(&a_sem,0,a);
     sem_init(&e_sem,0,e);

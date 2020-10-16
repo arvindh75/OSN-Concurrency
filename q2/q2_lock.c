@@ -257,6 +257,11 @@ void* student(void* inp) {
 
 int main() {
     scanf("%d %d %d", &n, &m, &o); //Get the inputs
+    if(n == 0 | m==0 | o==0) {
+        printf("Wrong inputs\n");
+        printf("\nSimulation Over.\n"); //Simulation ends
+        return 0;
+    }
     stu=o;
     waiting=0;
     int i;

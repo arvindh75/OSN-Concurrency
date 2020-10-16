@@ -179,9 +179,13 @@ void runSorts(long long int n) {
     for(int i=0;i<n;i++) scanf("%d", arr+i);
 
     int brr[n+1];
+    int crr[n+1];
     long double st;
     long double en;
-    for(int i=0;i<n;i++) brr[i] = arr[i];
+    for(int i=0;i<n;i++) { 
+        brr[i] = arr[i];
+        crr[i] = arr[i];
+    }
 
     printf("\nRunning Concurrent Mergesort for n = %lld\n", n);
     clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
@@ -218,9 +222,9 @@ void runSorts(long long int n) {
     printf("\nRunning Normal Mergesort for n = %lld\n", n);
     clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
     st = ts.tv_nsec/(1e9)+ts.tv_sec;
-    normal_mergeSort(brr, 0, n-1, n);
+    normal_mergeSort(crr, 0, n-1, n);
     for(int i=0; i<n; i++){
-        printf("%d ",brr[i]);
+        printf("%d ",crr[i]);
     }
     printf("\n");
     clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
@@ -228,7 +232,7 @@ void runSorts(long long int n) {
     printf("Time = %Lf\n", en - st);
     long double t3 = en - st;
 
-    printf("\nNormal Mergesort ran:\n\t- [%Lf] times faster than Concurrent Mergesort\n\t- [%Lf] times faster than Threaded Concurrent Mergesort\n\n\n", t1/t3, t1/t3);
+    printf("\nNormal Mergesort ran:\n\t- [%Lf] times faster than Concurrent Mergesort\n\t- [%Lf] times faster than Threaded Concurrent Mergesort\n\n\n", t1/t3, t2/t3);
     shmdt(arr);
     return;
 }
