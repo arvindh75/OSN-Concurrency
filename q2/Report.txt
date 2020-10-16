@@ -1,0 +1,22 @@
+-> Threads are created for each vaccination zone, each student and each company.
+-> Storing info about each student, zone and company in global arrays.
+-> Each zone and company has a separate lock.
+-> Companies produce random number of vaccines and random number of batches when all the vaccines 
+   they distributed got used up, infinitely until all students either test successful for antibodies
+   or undergo 3 trails.
+-> They busy wait for all the batches they produced to get used up.
+-> A student enters the waiting queue to join a zone infinitely unless he tests positive for antibodies or 
+   undergoes 3 trails. He is sent back home after 3 unsuccessful trials. He is sent to college if he has one
+   successful trial.
+-> waitzone() function tries to allocate a zone for all students in the waiting queue. It loops through the zones
+   and allocates the first "Currently not in vaccination phase" and "Has atleast one slot left" zone. It busy waits
+   until the allocated zone for a student completes vaccination phase and then tests for antibodies.
+-> zone() function loops infinitely through all the companies looking for a vaccine batch to procure. When, it procures,
+   it allocates random number of slots based on the condition given in pdf using assign_slot() function.
+-> assign_slot() function assigns slots for a zone's one vaccination phase and try to assign students to the empty slots.
+   Busy wait till all slots are used up and return back to zone() function to get re-called until all vaccines are over.
+   After the slot is allocated for the last vaccine, it returns to zone() function and continues it search for batches to
+   procure from by looping through all companies.
+-> The zone enters "Vaccination Phase" in assign_slot() after the slots are assigned.
+-> All of the infinite loops run only till all students exit.
+NOTE: Waiting "queue" is not a queue, just used for convenience.
