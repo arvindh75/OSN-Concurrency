@@ -66,16 +66,6 @@ void reset() { //Resets the color back
     printf("\033[0m");
 }
 
-void* tshirt(void* input) {
-    int id = ((struct st*)input)->id;
-    sem_wait(&c_sem);
-    magenta();
-    printf("\n%s collecting T-shirt\n", per_name[id]);
-    reset();
-    sem_post(&c_sem);
-    return NULL;
-}
-
 void* acoustic(void* input) { //Function for assigning Acoustic stage
     int id = ((struct st*)input)->id;
     int i;
@@ -164,18 +154,20 @@ void* acoustic(void* input) { //Function for assigning Acoustic stage
     }
     pthread_mutex_unlock(&stage_lock[per_stage[id]]);
     pthread_mutex_unlock(&per_lock[id]);
-    
-    pthread_t c_t[2];
     for(int j=0;j<co_per;j++) { //Loop through number of performer (either 1 or 2)
-        if(j==0)
-            pthread_create(&c_t[j], NULL, tshirt, &per_struct[id]);
-        else
-            pthread_create(&c_t[j], NULL, tshirt, &per_struct[per_coid[id]]);
+        sem_wait(&c_sem); //Wait for the co-ordinator
+        if(j==0) { //Main perfomer
+            magenta();
+            printf("\n%s collecting T-shirt\n", per_name[id]);
+            reset();
+        }
+        else { //Co-perfomer
+            magenta();
+            printf("\n%s collecting T-shirt\n", per_name[per_coid[id]]);
+            reset();
+        }
+        sem_post(&c_sem); //Replenish Co-ordinator semaphore
     }
-    for(int j=0;j<co_per;j++) { //Loop through number of performer (either 1 or 2)
-        pthread_join(c_t[j], NULL);
-    }
-    
     return NULL; //Return as stage was used and reset
 }
 
@@ -210,7 +202,7 @@ void* electric(void* input) { //Function for assigning Electric stage
     for(i=0;i<a+e;i++) { //Loop through all stages
         pthread_mutex_lock(&stage_lock[i]);
         if(stage_status[i] == 0) { //If the stage is Free
-            if(stage_typ[i] == 1) { //If the stage is Electric
+            if(stage_typ[i] == 0) { //If the stage is Acoustic
                 //Allocate the selected stage
                 stage_per[i] = id; //Assign stage's performer id as the current performer's ID
                 per_status[id] = 1; //Make the status of the performer as "Stage allocated"
@@ -267,16 +259,19 @@ void* electric(void* input) { //Function for assigning Electric stage
     }
     pthread_mutex_unlock(&stage_lock[per_stage[id]]);
     pthread_mutex_unlock(&per_lock[id]);
-    
-    pthread_t c_t[2];
     for(int j=0;j<co_per;j++) { //Loop through number of performer (either 1 or 2)
-        if(j==0)
-            pthread_create(&c_t[j], NULL, tshirt, &per_struct[id]);
-        else
-            pthread_create(&c_t[j], NULL, tshirt, &per_struct[per_coid[id]]);    
-    }
-    for(int j=0;j<co_per;j++) { //Loop through number of performer (either 1 or 2)
-        pthread_join(c_t[j], NULL);
+        sem_wait(&c_sem); //Wait for the co-ordinator
+        if(j==0) { //Main perfomer
+            magenta();
+            printf("\n%s collecting T-shirt\n", per_name[id]);
+            reset();
+        }
+        else { //Co-perfomer
+            magenta();
+            printf("\n%s collecting T-shirt\n", per_name[per_coid[id]]);
+            reset();
+        }
+        sem_post(&c_sem); //Replenish Co-ordinator semaphore
     }
     return NULL; //Return as stage was used and reset
 }
