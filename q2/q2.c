@@ -124,6 +124,9 @@ int assign_slot(int id) { //Assign slots for each zone
             return -1;
     }
     pthread_mutex_lock(&zone_lock[id]);
+    zone_over_slots[id]=0;
+    zone_prev_slots[id]=0;
+    zone_slots[id]=0;
     zone_prog[id]=0; //Zone exits vaccination phase
     pthread_mutex_unlock(&zone_lock[id]);
     return 0;
