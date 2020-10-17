@@ -104,25 +104,18 @@ int assign_slot(int id) { //Assign slots for each zone
     }
     
     pthread_mutex_lock(&zone_lock[id]);
+    zone_prog[id]=0; //Stop the zone if its in vaccination phase
     zone_slots[id] = (rand()%(min(zone_vacleft[id], 8, temp))) +1; //Randomly create slots for each zone
     zone_prev_slots[id] = zone_slots[id];
-    pthread_mutex_unlock(&zone_lock[id]);
     printf("\nVaccination Zone %d is ready to vaccinate with %d slots\n", id, zone_prev_slots[id]);
-    
-    pthread_mutex_lock(&zone_lock[id]);
-    zone_prog[id]=0; //Stop the zone if its in vaccination phase
     pthread_mutex_unlock(&zone_lock[id]);
-
+    
     while(zone_slots[id] && waiting) { //Wait until theres atleast one student in the waiting queue
     }
     
     pthread_mutex_lock(&zone_lock[id]);
     zone_over_slots[id] = zone_prev_slots[id] - zone_slots[id]; //Update over slots
-    pthread_mutex_unlock(&zone_lock[id]);
-    
     printf("\nVaccination Zone %d entering Vaccination Phase\n", id);
-    
-    pthread_mutex_lock(&zone_lock[id]);
     zone_prog[id]=1; //Zone enters vaccination phase
     pthread_mutex_unlock(&zone_lock[id]);
     
