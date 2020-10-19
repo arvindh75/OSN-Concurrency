@@ -155,7 +155,7 @@ void* zone(void* inp) {
                 pthread_mutex_unlock(&com_lock[it]);
                 
                 printf("\nPharmaceutical Company %d is delivering a vaccine batch to Vaccination Zone %d which has success probability %lf\n", it, id, com_prob[it]);
-                //sleep(1); //DIFF
+                sleep(1); //DIFF
                 printf("\nPharmaceutical Company %d has delivered vaccines to Vaccination zone %d, resuming vaccinations now\n", it, id);
                 break;
             }
@@ -208,7 +208,7 @@ int waitzone(int id) { //Assign zones to waiting students
             
             while(zone_prog[it] == 0) { //Wait till the zone starts vaccination phase
             }
-            
+            sleep(1); //DIFF
             printf("\nStudent %d on Vaccination Zone %d has been vaccinated which has success probability %lf\n", id, it, zone_prob[it]);
             
             pthread_mutex_lock(&zone_lock[it]);
@@ -217,12 +217,14 @@ int waitzone(int id) { //Assign zones to waiting students
             pthread_mutex_unlock(&zone_lock[it]);
 
             if((double)rand() / (double)RAND_MAX < zone_prob[it]) { //Check if the vaccination was successful
-                green();
+                sleep(1); //DIFF
+		green();
                 printf("\nStudent %d has tested positive for antibodies.\n\033[0m", id);
                 stu_vac[id]=1; //If successful, student can enter college
                 return 1;
             }
             else {
+		sleep(1); //DIFF
                 red();
                 printf("\nStudent %d has tested negative for antibodies.\n\033[0m", id);
                 stu_vac[id]=0;  
